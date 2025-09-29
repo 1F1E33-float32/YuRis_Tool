@@ -17,6 +17,8 @@ namespace YuRis_Tool
             string ysroot = null;
             string yscom = null;
             byte[] ybnKey = BitConverter.GetBytes(0x4A415E60); // default key
+            bool outputJson = false; // default text output
+            string format = null;    // optional --format override
 
             if (args.Length == 0 || args.Contains("-h") || args.Contains("--help"))
             {
@@ -43,6 +45,15 @@ namespace YuRis_Tool
                     case "--yscom":
                         RequireValue(args, ref i, "--yscd");
                         yscom = args[++i];
+                        break;
+                    case "-j":
+                    case "--json":
+                        outputJson = true;
+                        break;
+                    case "-f":
+                    case "--format":
+                        RequireValue(args, ref i, "--format");
+                        format = args[++i];
                         break;
                     case "-k":
                     case "--key":
@@ -125,6 +136,19 @@ namespace YuRis_Tool
                 return;
             }
 
+            // Normalize format flag
+            if (!string.IsNullOrWhiteSpace(format))
+            {
+                var f = format.Trim().ToLowerInvariant();
+                if (f == "json") outputJson = true;
+                else if (f == "txt" || f == "text") outputJson = false;
+                else
+                {
+                    Fail($"Unknown --format: {format}. Supported: txt, json");
+                    return;
+                }
+            }
+
             if (!string.IsNullOrEmpty(yscom))
             {
                 if (!File.Exists(yscom))
@@ -137,7 +161,10 @@ namespace YuRis_Tool
 
             var yuris = new YuRisScript();
             yuris.Init(ysroot, ybnKey);
-            yuris.DecompileProject();
+            if (outputJson)
+                yuris.DecompileProjectJson();
+            else
+                yuris.DecompileProject();
         }
 
         static void PrintUsage()
@@ -153,6 +180,8 @@ namespace YuRis_Tool
             Console.WriteLine("  -r, --root     Root directory containing ysc.ybn/ysl.ybn/yst_list.ybn, etc.");
             Console.WriteLine("  -c, --yscd     Path to YSCD file (optional). Also accepts --yscom.");
             Console.WriteLine("  -k, --key      YBN key as 32-bit hex (e.g. 0x4A415E60) or 4 bytes.");
+            Console.WriteLine("  -j, --json     Output decompiled data as JSON files instead of text.");
+            Console.WriteLine("  -f, --format   Explicitly set output format: txt | json.");
             Console.WriteLine("  -h, --help     Show this help.");
             Console.WriteLine("");
             Console.WriteLine("Key examples:");
@@ -231,4 +260,3 @@ namespace YuRis_Tool
         }
     }
 }
-

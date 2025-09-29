@@ -50,6 +50,11 @@ namespace YuRis_Tool
 
         static List<Variable> _variables = new List<Variable>();
 
+        public static IEnumerable<Variable> EnumerateVariables()
+        {
+            return _variables;
+        }
+
         public static void Load(string filePath)
         {
             using (var stream = File.OpenRead(filePath))
