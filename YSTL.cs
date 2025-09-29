@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-
-#pragma warning disable IDE0017
-#pragma warning disable IDE0063
 
 namespace YuRis_Tool
 {
@@ -28,14 +24,6 @@ namespace YuRis_Tool
             {
                 Read(reader);
             }
-        }
-
-        public void Dump(string filePath)
-        {
-            using var textWriter = File.CreateText(filePath);
-            using var csvWriter = new CsvHelper.CsvWriter(textWriter, CultureInfo.InvariantCulture);
-            csvWriter.WriteRecords(_scripts);
-            csvWriter.Flush();
         }
 
         void Read(BinaryReader reader)
@@ -64,7 +52,7 @@ namespace YuRis_Tool
                 reader.ReadInt32();
                 reader.ReadInt32();
                 reader.ReadInt32();
-                if(version > 462)
+                if (version > 462)
                     reader.ReadInt32();
 
                 _scripts.Add(info);

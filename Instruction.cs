@@ -1,6 +1,5 @@
-﻿
+﻿using System;
 using System.Diagnostics;
-using System;
 
 namespace YuRis_Tool
 {
@@ -195,7 +194,7 @@ namespace YuRis_Tool
 
         public bool Negate = false;
 
-        public ArithmeticOperator(Instruction left, Instruction right, Type op) : base(left,right, op) { }
+        public ArithmeticOperator(Instruction left, Instruction right, Type op) : base(left, right, op) { }
 
         public override string GetOperator(Type type)
         {
@@ -275,7 +274,7 @@ namespace YuRis_Tool
 
         public override string GetOperator(Type type)
         {
-            switch(type)
+            switch (type)
             {
                 case Type.LogicalAnd:
                     return "&&";
@@ -323,16 +322,16 @@ namespace YuRis_Tool
 
         public override string ToString()
         {
-            switch(Operator)
+            switch (Operator)
             {
                 case Type.String:
-                {
-                    return $"$({Operand})";
-                }
+                    {
+                        return $"$({Operand})";
+                    }
                 case Type.Number:
-                {
-                    return $"@({Operand})";
-                }
+                    {
+                        return $"@({Operand})";
+                    }
             }
             return $"({Operator})({Operand})";
         }
@@ -424,7 +423,7 @@ namespace YuRis_Tool
         }
     }
 
-    public class VariableRef: Instruction
+    public class VariableRef : Instruction
     {
         public VariableLoadMode Mode;
         public short Index;
@@ -442,6 +441,21 @@ namespace YuRis_Tool
         public override string ToString()
         {
             return $"{(char)Mode}{YSVR.GetDecompiledVarName(_varInfo)}";
+        }
+    }
+
+    // Represents an implicit argument keyword used as a left operand in assignment-context expressions
+    public class KeywordRef : Instruction
+    {
+        public string Name;
+        public KeywordRef(string name)
+        {
+            Name = name;
+        }
+
+        public override string ToString()
+        {
+            return Name ?? string.Empty;
         }
     }
 

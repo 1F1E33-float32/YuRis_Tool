@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 
-#pragma warning disable IDE0017
-#pragma warning disable IDE0063
-
 namespace YuRis_Tool
 {
     class YSER

@@ -35,114 +35,224 @@ namespace YuRis_Tool
         public void Evaluate()
         {
             var stack = new Stack<Instruction>();
-            foreach (var t in _insts)
+
+            // Local helpers for diagnostics (kept inside method to avoid changing class surface)
+            InvalidOperationException BuildEvalException(string reason, int index, Instruction current, Exception inner = null)
             {
-                switch (t)
+                var exprCtx = this is AssignExprInstSet aes
+                    ? $"Expr: Keyword='{aes.exprInfo?.Keyword}', LoadOp='{aes.LoadOp}', ResultType='{aes.exprInfo?.ResultType}'"
+                    : "Expr: <no-assign-context>";
+
+                string DumpInsts()
                 {
-                    case ArithmeticOperator ao:
+                    try
                     {
-                        ao.Right = stack.Pop();
-                        ao.Left = stack.Pop();
-                        stack.Push(ao);
-                        break;
-                    }
-                    case RelationalOperator ro:
-                    {
-                        ro.Right = stack.Pop();
-                        ro.Left = stack.Pop();
-                        stack.Push(ro);
-                        break;
-                    }
-                    case LogicalOperator lo:
-                    {
-                        lo.Right = stack.Pop();
-                        lo.Left = stack.Pop();
-                        stack.Push(lo);
-                        break;
-                    }
-                    case UnaryOperator unaryOp:
-                    {
-                        if (unaryOp.Operator == UnaryOperator.Type.Negate)
+                        var lines = new List<string>(_insts.Count);
+                        for (int i = 0; i < _insts.Count; i++)
                         {
-                            switch (stack.Peek())
-                            {
-                                case ByteLiteral bl:
-                                {
-                                    bl.Value = Convert.ToSByte(-bl.Value);
-                                    break;
-                                }
-                                case ShortLiteral sl:
-                                {
-                                    sl.Value = Convert.ToInt16(-sl.Value);
-                                    break;
-                                }
-                                case IntLiteral il:
-                                {
-                                    il.Value = -il.Value;
-                                    break;
-                                }
-                                case LongLiteral ll:
-                                {
-                                    ll.Value = -ll.Value;
-                                    break;
-                                }
-                                case DecimalLiteral dl:
-                                {
-                                    dl.Value = -dl.Value;
-                                    break;
-                                }
-                                case ArrayAccess aa:
-                                {
-                                    aa.Negate ^= true;
-                                    break;
-                                }
-                                case VariableAccess va:
-                                {
-                                    va.Negate ^= true;
-                                    break;
-                                }
-                                case ArithmeticOperator ao:
-                                {
-                                    ao.Negate ^= true;
-                                    break;
-                                }
-                                default:
-                                {
-                                    throw new InvalidOperationException($"Selected object ({stack.Peek()}) does not support negate operator!");
-                                }
-                            }
+                            var inst = _insts[i];
+                            string type = inst?.GetType().Name ?? "<null>";
+                            string desc = inst?.ToString() ?? "<null>";
+                            lines.Add($"[{i}] {type}: {desc}");
                         }
-                        else
-                        {
-                            unaryOp.Operand = stack.Pop();
-                            stack.Push(unaryOp);
-                        }
-                        break;
+                        return string.Join(Environment.NewLine, lines);
                     }
-                    case ArrayAccess aa:
-                    {
-                        var indices = new List<Instruction>();
-                        var top = stack.Pop();
-                        while (top is not VariableRef)
-                        {
-                            indices.Add(top);
-                            top = stack.Pop();
-                        }
-                        indices.Reverse();
-                        stack.Push(new ArrayAccess((VariableRef)top, indices.ToArray()));
-                        break;
-                    }
-                    case Nop:
-                        continue;
-                    default:
-                    {
-                        stack.Push(t);
-                        break;
-                    }
+                    catch { return "<failed to dump instructions>"; }
                 }
+
+                string DumpStack()
+                {
+                    try
+                    {
+                        if (stack.Count == 0) return "<empty>";
+                        return string.Join(" | ", stack.Select(s => $"{s?.GetType().Name}:{s}"));
+                    }
+                    catch { return "<failed to dump stack>"; }
+                }
+
+                var currentInfo = current == null ? "<none>" : $"{current.GetType().Name}:{current}";
+                var msg = $@"EVAL_DIAGNOSTIC
+Reason: {reason}
+At instruction index: {index}
+Current instruction: {currentInfo}
+ScriptId: {_scriptId}
+{exprCtx}
+StackCount: {stack.Count}
+Stack Snapshot: {DumpStack()}
+Instruction List:
+{DumpInsts()}";
+
+                return new InvalidOperationException(msg, inner);
             }
 
-            _inst = stack.Single();
+            try
+            {
+                for (int idx = 0; idx < _insts.Count; idx++)
+                {
+                    var t = _insts[idx];
+                    switch (t)
+                    {
+                        case ArithmeticOperator ao:
+                            {
+                                if (stack.Count < 2)
+                                {
+                                    if (this is AssignExprInstSet aes && stack.Count == 1)
+                                    {
+                                        ao.Right = stack.Pop();
+                                        ao.Left = new KeywordRef(aes.exprInfo?.Keyword);
+                                        stack.Push(ao);
+                                        break;
+                                    }
+                                    throw BuildEvalException("Arithmetic operator requires 2 operands, stack underflow.", idx, t);
+                                }
+                                ao.Right = stack.Pop();
+                                ao.Left = stack.Pop();
+                                stack.Push(ao);
+                                break;
+                            }
+                        case RelationalOperator ro:
+                            {
+                                if (stack.Count < 2)
+                                {
+                                    if (this is AssignExprInstSet aes && stack.Count == 1)
+                                    {
+                                        ro.Right = stack.Pop();
+                                        ro.Left = new KeywordRef(aes.exprInfo?.Keyword);
+                                        stack.Push(ro);
+                                        break;
+                                    }
+                                    throw BuildEvalException("Relational operator requires 2 operands, stack underflow.", idx, t);
+                                }
+                                ro.Right = stack.Pop();
+                                ro.Left = stack.Pop();
+                                stack.Push(ro);
+                                break;
+                            }
+                        case LogicalOperator lo:
+                            {
+                                if (stack.Count < 2)
+                                {
+                                    if (this is AssignExprInstSet aes && stack.Count == 1)
+                                    {
+                                        lo.Right = stack.Pop();
+                                        lo.Left = new KeywordRef(aes.exprInfo?.Keyword);
+                                        stack.Push(lo);
+                                        break;
+                                    }
+                                    throw BuildEvalException("Logical/bitwise operator requires 2 operands, stack underflow.", idx, t);
+                                }
+                                lo.Right = stack.Pop();
+                                lo.Left = stack.Pop();
+                                stack.Push(lo);
+                                break;
+                            }
+                        case UnaryOperator unaryOp:
+                            {
+                                if (unaryOp.Operator == UnaryOperator.Type.Negate)
+                                {
+                                    if (stack.Count < 1)
+                                        throw BuildEvalException("Negate operator requires 1 operand, stack underflow.", idx, t);
+                                    switch (stack.Peek())
+                                    {
+                                        case ByteLiteral bl:
+                                            {
+                                                bl.Value = Convert.ToSByte(-bl.Value);
+                                                break;
+                                            }
+                                        case ShortLiteral sl:
+                                            {
+                                                sl.Value = Convert.ToInt16(-sl.Value);
+                                                break;
+                                            }
+                                        case IntLiteral il:
+                                            {
+                                                il.Value = -il.Value;
+                                                break;
+                                            }
+                                        case LongLiteral ll:
+                                            {
+                                                ll.Value = -ll.Value;
+                                                break;
+                                            }
+                                        case DecimalLiteral dl:
+                                            {
+                                                dl.Value = -dl.Value;
+                                                break;
+                                            }
+                                        case ArrayAccess aai:
+                                            {
+                                                aai.Negate ^= true;
+                                                break;
+                                            }
+                                        case VariableAccess vai:
+                                            {
+                                                vai.Negate ^= true;
+                                                break;
+                                            }
+                                        case ArithmeticOperator aoi:
+                                            {
+                                                aoi.Negate ^= true;
+                                                break;
+                                            }
+                                        default:
+                                            {
+                                                throw BuildEvalException($"Selected object ({stack.Peek()}) does not support negate operator!", idx, t);
+                                            }
+                                    }
+                                }
+                                else
+                                {
+                                    if (stack.Count < 1)
+                                        throw BuildEvalException("Unary operator requires 1 operand, stack underflow.", idx, t);
+                                    unaryOp.Operand = stack.Pop();
+                                    stack.Push(unaryOp);
+                                }
+                                break;
+                            }
+                        case ArrayAccess aa:
+                            {
+                                if (stack.Count < 1)
+                                    throw BuildEvalException("ArrayAccess expects indices and a VariableRef base, but stack is empty.", idx, t);
+                                var indices = new List<Instruction>();
+                                var top = stack.Pop();
+                                while (top is not VariableRef)
+                                {
+                                    indices.Add(top);
+                                    if (stack.Count == 0)
+                                        throw BuildEvalException("ArrayAccess missing VariableRef before indices are exhausted (unterminated indices).", idx, t);
+                                    top = stack.Pop();
+                                }
+                                indices.Reverse();
+                                stack.Push(new ArrayAccess((VariableRef)top, indices.ToArray()));
+                                break;
+                            }
+                        case Nop:
+                            continue;
+                        default:
+                            {
+                                stack.Push(t);
+                                break;
+                            }
+                    }
+                }
+
+                if (stack.Count != 1)
+                {
+                    throw BuildEvalException($"Expression did not resolve to a single value (StackCount={stack.Count}).", _insts.Count - 1, null);
+                }
+
+                _inst = stack.Single();
+            }
+            catch (InvalidOperationException)
+            {
+                // Already enriched by BuildEvalException; just rethrow.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Wrap unexpected exceptions with diagnostic context
+                throw BuildEvalException("Unhandled exception during Evaluate().", -1, null, ex);
+            }
         }
 
         public override string ToString()

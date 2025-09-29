@@ -50,7 +50,7 @@ namespace YuRis_Tool
 
                 if (labels != null)
                 {
-                    foreach(var label in labels)
+                    foreach (var label in labels)
                         outputStream.WriteLine($"#={label.Name}");
                 }
 
@@ -59,28 +59,28 @@ namespace YuRis_Tool
                 {
                     case "IF":
                     case "LOOP":
-                    {
-                        outputStream.Write("".PadLeft(nestDepth * 4, ' '));
-                        nestDepth++;
-                        break;
-                    }
+                        {
+                            outputStream.Write("".PadLeft(nestDepth * 4, ' '));
+                            nestDepth++;
+                            break;
+                        }
                     case "ELSE":
-                    {
-                        outputStream.Write("".PadLeft((nestDepth - 1) * 4, ' '));
-                        break;
-                    }
+                        {
+                            outputStream.Write("".PadLeft((nestDepth - 1) * 4, ' '));
+                            break;
+                        }
                     case "IFEND":
                     case "LOOPEND":
-                    {
-                        nestDepth--;
-                        outputStream.Write("".PadLeft(nestDepth * 4, ' '));
-                        break;
-                    }
+                        {
+                            nestDepth--;
+                            outputStream.Write("".PadLeft(nestDepth * 4, ' '));
+                            break;
+                        }
                     default:
-                    {
-                        outputStream.Write("".PadLeft(nestDepth * 4, ' '));
-                        break;
-                    }
+                        {
+                            outputStream.Write("".PadLeft(nestDepth * 4, ' '));
+                            break;
+                        }
                 }
                 outputStream.WriteLine(cmd);
             }
@@ -91,14 +91,14 @@ namespace YuRis_Tool
         {
             List<string> sourcePaths = new List<string>();
 
-            foreach(var script in _ystl)
+            foreach (var script in _ystl)
             {
                 var sourcePath = Path.Combine(_dirPath, script.Source);
                 Directory.CreateDirectory(Path.GetDirectoryName(sourcePath));
                 sourcePaths.Add(sourcePath);
 
                 using var textWriter = new StringWriter();
-                if(Decompile(script.Id, textWriter))
+                if (Decompile(script.Id, textWriter))
                 {
                     //File.WriteAllText(sourcePath, textWriter.ToString());
                     var data = textWriter.ToString();

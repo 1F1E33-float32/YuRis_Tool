@@ -26,7 +26,7 @@ namespace YuRis_Tool
 
         static List<YSCommandDefine> _commands = new List<YSCommandDefine>();
         static List<YSReservedVariableDefine> _vars = new List<YSReservedVariableDefine>();
-        
+
         public static List<YSReservedVariableDefine> ReservedVars => _vars;
 
         public static void Load(string filePath)
@@ -50,14 +50,14 @@ namespace YuRis_Tool
                 var cmdCount = reader.ReadInt32(); // count
                 reader.ReadInt32(); // zero
 
-                for(int i = 0; i< cmdCount; i++)
+                for (int i = 0; i < cmdCount; i++)
                 {
                     var name = reader.ReadAnsiString();
                     var kwCount = reader.ReadByte();
 
                     var kws = new List<YSKeywordDefine>();
 
-                    for(int j = 0; j < kwCount; j++)
+                    for (int j = 0; j < kwCount; j++)
                     {
                         var kName = reader.ReadAnsiString();
                         var a = reader.ReadByte();
@@ -74,14 +74,14 @@ namespace YuRis_Tool
                 var varCount = reader.ReadInt32();
                 reader.ReadInt32(); // zero
 
-                for(int i = 0;i< varCount; i++)
+                for (int i = 0; i < varCount; i++)
                 {
                     var name = reader.ReadAnsiString();
                     var type = (YSVR.VariableType)reader.ReadByte();
                     var dimCount = reader.ReadByte();
 
                     var dims = new List<uint>();
-                    for(int j = 0;j < dimCount; j++)
+                    for (int j = 0; j < dimCount; j++)
                     {
                         dims.Add(reader.ReadUInt32());
                     }

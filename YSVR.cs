@@ -77,7 +77,7 @@ namespace YuRis_Tool
             {
                 var scope = (VariableScope)reader.ReadByte();
                 //Workaround
-                if(ver > 450)
+                if (ver > 450)
                     reader.ReadByte();
                 var scriptIndex = reader.ReadInt16();
                 var variableId = reader.ReadInt16();
@@ -85,7 +85,7 @@ namespace YuRis_Tool
                 var dimensionCount = reader.ReadByte();
                 var dimensions = new uint[dimensionCount];
                 for (var o = 0; o < dimensionCount; o++)
-                { 
+                {
                     dimensions[o] = reader.ReadUInt32();
                 }
 
@@ -99,16 +99,17 @@ namespace YuRis_Tool
                         value = reader.ReadDouble();
                         break;
                     case 3:
-                    {
-                        var offset = 0;
-                        var length = reader.ReadUInt16();
-                        if(length > 0)
-                            value = Instruction.GetInstruction(0, reader.ReadBytes(length).AsSpan(), ref offset);
-                        break;
-                    }
+                        {
+                            var offset = 0;
+                            var length = reader.ReadUInt16();
+                            if (length > 0)
+                                value = Instruction.GetInstruction(0, reader.ReadBytes(length).AsSpan(), ref offset);
+                            break;
+                        }
                     default:
                         break;
-                };
+                }
+                ;
                 _variables.Add(new Variable(scope, scriptIndex, variableId, type, dimensions, value));
             }
         }
@@ -154,20 +155,20 @@ namespace YuRis_Tool
                 switch (variable.Type)
                 {
                     case 1:
-                    {
-                        writer.WriteLine($"G_INT[@{v}]");
-                        break;
-                    }
+                        {
+                            writer.WriteLine($"G_INT[@{v}]");
+                            break;
+                        }
                     case 2:
-                    {
-                        writer.WriteLine($"G_FLT[@{v}]");
-                        break;
-                    }
+                        {
+                            writer.WriteLine($"G_FLT[@{v}]");
+                            break;
+                        }
                     case 3:
-                    {
-                        writer.WriteLine($"G_STR[${v}]");
-                        break;
-                    }
+                        {
+                            writer.WriteLine($"G_STR[${v}]");
+                            break;
+                        }
                 }
             }
         }

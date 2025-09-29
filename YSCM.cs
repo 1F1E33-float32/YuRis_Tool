@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-#pragma warning disable IDE0017
-#pragma warning disable IDE0063
-
 namespace YuRis_Tool
 {
     class YSCM
@@ -95,7 +92,7 @@ namespace YuRis_Tool
             for (var i = 0; i < count; i++)
             {
                 var cmd = new CommandInfo();
-                
+
                 cmd.Name = reader.ReadAnsiString();
 
                 //Debug.WriteLine($"{i:X2} {cmd.Name}");
