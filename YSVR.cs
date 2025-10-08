@@ -82,7 +82,7 @@ namespace YuRis_Tool
             {
                 var scope = (VariableScope)reader.ReadByte();
                 //Workaround
-                if (ver > 450)
+                if (ver > 454)
                     reader.ReadByte();
                 var scriptIndex = reader.ReadInt16();
                 var variableId = reader.ReadInt16();

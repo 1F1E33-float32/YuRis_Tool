@@ -367,6 +367,26 @@ namespace YuRis_Tool
             {
                 Id = CommandIDGenerator.GetID(id);
             }
+
+            public override string ToString()
+            {
+                var cmdName = Id.ToString();
+                if (Expressions == null || Expressions.Count == 0)
+                {
+                    return $"{cmdName}[]";
+                }
+
+                var args = new List<string>();
+                foreach (var expr in Expressions)
+                {
+                    if (expr.ExprInsts != null)
+                    {
+                        args.Add(expr.ExprInsts.ToString());
+                    }
+                }
+
+                return $"{cmdName}[{string.Join(", ", args)}]";
+            }
         }
 
         public class CommandExpression
