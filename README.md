@@ -1,5 +1,9 @@
 # YuRis script analyze tool
 
+Author: https://github.com/nanami5270
+
+Decompile: https://github.com/pkuislm
+
 Usage
 
 - `YuRis_Tool --root <ysbin_dir> [--yscd <yscd_file>] [--key <hex32>|<b0 b1 b2 b3>] [--json|--format json]`
@@ -17,7 +21,3 @@ Formats list
 - [x] YSTL
 - [x] YSVR
 - [x] YSTB
-
-Decompilation contributed by Pkuism, BIG THANKS.
-
-2024.12.20
